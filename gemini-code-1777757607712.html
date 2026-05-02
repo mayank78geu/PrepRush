@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepRush | AI-Accelerated Revision</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #08090d;
+            --surface: #12141c;
+            --surface-light: #1c1f2b;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --secondary: #10b981;
+            --rush: #f43f5e;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.06);
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); overflow-x: hidden; min-height: 100vh; }
+
+        /* --- Global Components --- */
+        .hidden { display: none !important; }
+        .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: var(--transition); font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-p { background: var(--primary); color: white; }
+        .btn-p:hover { transform: translateY(-2px); box-shadow: 0 10px 20px var(--primary-glow); }
+        .btn-rush { background: var(--rush); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- Auth Section --- */
+        #auth-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, #1e1b4b, var(--bg)); }
+        .auth-card { width: 100%; max-width: 400px; text-align: center; }
+        .input-group { margin-bottom: 16px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-dim); }
+        input, select, textarea { width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: white; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
+
+        /* --- Main Layout --- */
+        #app-shell { display: flex; }
+        aside { width: 260px; height: 100vh; background: var(--surface); border-right: 1px solid var(--border); padding: 2rem 1.5rem; position: fixed; }
+        main { margin-left: 260px; width: calc(100% - 260px); padding: 2rem 5%; }
+        
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 10px; }
+        .nav-link { padding: 12px 16px; border-radius: 10px; color: var(--text-dim); cursor: pointer; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .nav-link.active { background: var(--surface-light); color: var(--primary); }
+
+        /* --- Dashboard Bento --- */
+        .bento-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-top: 2rem; }
+        .mode-card { cursor: pointer; position: relative; overflow: hidden; transition: 0.4s; }
+        .mode-card:hover { border-color: var(--primary); transform: scale(1.01); }
+        .mode-card.rush { background: linear-gradient(135deg, #2d0a12 0%, var(--surface) 100%); border-color: rgba(244, 63, 94, 0.2); }
+        
+        /* --- Study View (AI Output) --- */
+        .revision-header { background: linear-gradient(to right, var(--surface), transparent); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px; }
+        .timeline-scroll { display: flex; gap: 12px; margin: 20px 0; overflow-x: auto; padding-bottom: 10px; }
+        .slot { padding: 10px 20px; background: var(--surface-light); border-radius: 50px; font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
+        .slot.active { background: var(--primary); border-color: var(--primary); }
+
+        .content-body { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        .explanation-card { line-height: 1.8; color: #cbd5e1; }
+        .explanation-card h3 { color: var(--text-main); margin-bottom: 16px; }
+        .example-pill { background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--secondary); padding: 20px; border-radius: 0 12px 12px 0; margin: 20px 0; }
+        
+        .practice-zone { background: var(--surface-light); padding: 24px; border-radius: var(--radius); }
+        .quiz-option { padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .quiz-option:hover { border-color: var(--primary); }
+
+        /* --- Animations --- */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate { animation: slideUp 0.5s ease forwards; }
+
+        @media (max-width: 1100px) {
+            aside { width: 80px; } .nav-text, .logo span { display: none; }
+            main { margin-left: 80px; width: calc(100% - 80px); }
+            .content-body, .bento-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. AUTH SCREEN -->
+    <section id="auth-screen" class="animate">
+        <div class="auth-card card">
+            <div class="logo" style="justify-content: center;">⚡ PrepRush</div>
+            <h2 style="margin-bottom: 8px;">Master your exams.</h2>
+            <p style="margin-bottom: 32px;">AI-powered high-priority revision.</p>
+            <div class="input-group">
+                <label>Institutional Email</label>
+                <input type="email" placeholder="name@university.com">
+            </div>
+            <button class="btn btn-p" style="width: 100%; justify-content: center;" onclick="showApp()">Sign In to Revise &rarr;</button>
+        </div>
+    </section>
+
+    <!-- 2. APP SHELL -->
+    <section id="app-shell" class="hidden">
+        <aside>
+            <div class="logo">⚡ <span>PrepRush</span></div>
+            <nav>
+                <div class="nav-link active" onclick="nav('dashboard')">🏠 <span class="nav-text">Dashboard</span></div>
+                <div class="nav-link">📚 <span class="nav-text">My Library</span></div>
+                <div class="nav-link">📈 <span class="nav-text">Analytics</span></div>
+                <div class="nav-link">⚙️ <span class="nav-text">Settings</span></div>
+            </nav>
+        </aside>
+
+        <main>
+            <!-- Header -->
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 1.5rem;">Hello, Ishaan 👋</h1>
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">Final Year BCA | Graphic Era University</p>
+                </div>
+                <div class="btn btn-outline" style="font-size: 0.8rem;">🔥 12 Day Streak</div>
+            </header>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard" class="animate">
+                <div class="bento-grid">
+                    <div class="card mode-card" onclick="startSetup('normal')">
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--primary);">Focused Study</span>
+                        <h2 style="margin: 12px 0 8px 0;">Normal Revision</h2>
+                        <p style="color: var(--text-dim); margin-bottom: 20px;">Deep dive into a specific topic. AI generates core points and an instant MCQ test.</p>
+                        <span style="color: var(--primary); font-weight: 700;">Launch Module &rarr;</span>
+                    </div>
+                    <div class="card mode-card rush" onclick="startSetup('rush')">
+                        <span class="badge" style="background: rgba(244, 63, 94, 0.2); color: var(--rush);">Emergency Mode</span>
+                        <h2 style="margin: 12px 0 8px 0;">PrepRush Mode</h2>
+                        <p style="color: var(--text-dim); margin-bottom: 20px;">Short on time? AI picks the highest-weightage topics and builds a survival schedule.</p>
+                        <span style="color: var(--rush); font-weight: 700;">Activate 24h Plan &rarr;</span>
+                    </div>
+                </div>
+
+                <h3 style="margin: 32px 0 16px 0;">Recent Sessions</h3>
+                <div class="card" style="padding: 0;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600;">Full Stack Architecture</span>
+                            <p style="font-size: 0.75rem; color: var(--text-dim);">Spring Boot & Microservices • 85% Quiz Score</p>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.75rem;">Revisit</button>
+                    </div>
+                    <div style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-weight: 600;">Data Structures - Trees</span>
+                            <p style="font-size: 0.75rem; color: var(--text-dim);">Normal Revision • 2 Days Ago</p>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.75rem;">Revisit</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETUP VIEW -->
+            <div id="view-setup" class="hidden animate" style="max-width: 600px; margin: 40px auto;">
+                <h2 id="setup-title" style="margin-bottom: 24px;">Setup Session</h2>
+                <div class="card">
+                    <div class="input-group">
+                        <label>Subject / Exam Name</label>
+                        <input type="text" id="subject-in" placeholder="e.g. UPSC Modern History, Class 12 Physics">
+                    </div>
+                    <div class="input-group" id="topic-group">
+                        <label>Specific Topic</label>
+                        <input type="text" id="topic-in" placeholder="e.g. Total Internal Reflection">
+                    </div>
+                    <div class="input-group">
+                        <label>Academic Level</label>
+                        <select id="level-in">
+                            <option>Class 10/12 Board</option>
+                            <option>Undergraduate (BCA/BTech)</option>
+                            <option>Competitive (UPSC/JEE/NEET)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-p" style="width: 100%; justify-content: center;" onclick="generateSession()">
+                        ✨ Generate AI Material
+                    </button>
+                </div>
+            </div>
+
+            <!-- STUDY VIEW -->
+            <div id="view-study" class="hidden animate">
+                <div class="revision-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span class="badge" id="mode-badge" style="background: var(--primary); color: white;">Normal Mode</span>
+                            <h1 id="active-topic" style="margin-top: 10px;">Subject Title</h1>
+                        </div>
+                        <button class="btn btn-outline" onclick="nav('dashboard')">End Session</button>
+                    </div>
+                    
+                    <div class="timeline-scroll" id="rush-timeline">
+                        <!-- Slots generated by JS -->
+                    </div>
+                </div>
+
+                <div class="content-body">
+                    <div class="card explanation-card">
+                        <h3>Key Explanations</h3>
+                        <p id="ai-explanation">Content loading...</p>
+                        
+                        <div class="example-pill">
+                            <strong style="color: var(--secondary); display: block; margin-bottom: 4px;">🚀 Real-World Example</strong>
+                            <span id="ai-example">Example loading...</span>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px;">
+                            <h4 style="margin-bottom: 10px; color: var(--primary);">📝 Exam Writing Strategy</h4>
+                            <p id="ai-strategy" style="font-size: 0.9rem;">Tips for scoring max marks loading...</p>
+                        </div>
+                    </div>
+
+                    <div class="practice-zone">
+                        <h3 style="margin-bottom: 20px;">Instant Practice</h3>
+                        <div id="quiz-ui">
+                            <p style="margin-bottom: 15px; font-weight: 600;">Identify the correct statement:</p>
+                            <div class="quiz-option">Option A: Gemini generates this on the fly.</div>
+                            <div class="quiz-option">Option B: This is personalized to your level.</div>
+                            <div class="quiz-option">Option C: Both A and B.</div>
+                            <button class="btn btn-p" style="width: 100%; justify-content: center; margin-top: 10px;">Submit Answer</button>
+                        </div>
+
+                        <div id="subjective-ui" class="hidden">
+                            <p style="margin-bottom: 15px; font-weight: 600;">Question: Briefly explain the importance of this topic.</p>
+                            <textarea placeholder="Write your answer here..." rows="6" style="background: var(--surface); margin-bottom: 15px;"></textarea>
+                            <button class="btn btn-p" style="width: 100%; justify-content: center;" onclick="simulateFeedback(this)">Get AI Feedback</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <script>
+        let currentMode = 'normal';
+
+        function showApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+        }
+
+        function nav(view) {
+            document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById('view-' + view).classList.remove('hidden');
+        }
+
+        function startSetup(mode) {
+            currentMode = mode;
+            nav('setup');
+            const title = document.getElementById('setup-title');
+            const topicGroup = document.getElementById('topic-group');
+            
+            if(mode === 'rush') {
+                title.innerText = "PrepRush Survival Setup";
+                title.style.color = "var(--rush)";
+                topicGroup.style.display = 'none';
+            } else {
+                title.innerText = "Normal Revision Setup";
+                title.style.color = "var(--text-main)";
+                topicGroup.style.display = 'block';
+            }
+        }
+
+        function generateSession() {
+            nav('study');
+            const badge = document.getElementById('mode-badge');
+            const timeline = document.getElementById('rush-timeline');
+            const quizUI = document.getElementById('quiz-ui');
+            const subjectiveUI = document.getElementById('subjective-ui');
+
+            if(currentMode === 'rush') {
+                badge.innerText = "PrepRush Active";
+                badge.style.background = "var(--rush)";
+                timeline.classList.remove('hidden');
+                timeline.innerHTML = `
+                    <div class="slot active">09:00 AM - Core Basics</div>
+                    <div class="slot">12:00 PM - High Priority</div>
+                    <div class="slot">04:00 PM - Case Studies</div>
+                    <div class="slot">08:00 PM - Mock Test</div>
+                `;
+                quizUI.classList.add('hidden');
+                subjectiveUI.classList.remove('hidden');
+                document.getElementById('active-topic').innerText = "Emergency Plan: " + document.getElementById('subject-in').value;
+            } else {
+                badge.innerText = "Normal Revision";
+                badge.style.background = "var(--primary)";
+                timeline.classList.add('hidden');
+                quizUI.classList.remove('hidden');
+                subjectiveUI.classList.add('hidden');
+                document.getElementById('active-topic').innerText = document.getElementById('topic-in').value;
+            }
+
+            // Simulate AI Content Loading
+            document.getElementById('ai-explanation').innerText = "Loading tailored explanations from Gemini...";
+            setTimeout(() => {
+                document.getElementById('ai-explanation').innerText = "This topic is fundamental for your level. Gemini AI has identified that 60% of previous year papers focus on the relationship between these variables...";
+                document.getElementById('ai-example').innerText = "Think of it like a microservice architecture where each component is independent but communicates via APIs.";
+                document.getElementById('ai-strategy').innerText = "Use a flow-chart for this answer. Examiners give 1 extra mark for visual representation of the logic.";
+            }, 1500);
+        }
+
+        function simulateFeedback(btn) {
+            btn.innerText = "Analyzing your answer...";
+            btn.style.opacity = "0.7";
+            setTimeout(() => {
+                alert("AI Feedback: Your conceptual understanding is 8/10. To reach 10/10, try using technical keywords like 'Encapsulation' and 'Asynchronous'.");
+                btn.innerText = "Get AI Feedback";
+                btn.style.opacity = "1";
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

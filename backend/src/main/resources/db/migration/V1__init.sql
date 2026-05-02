@@ -1,0 +1,55 @@
+﻿CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sessions (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  paper_name VARCHAR(200) NOT NULL,
+  level VARCHAR(50) NOT NULL,
+  mode ENUM(''NORMAL'', ''PREP_RUSH'') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE topics (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  session_id BIGINT NOT NULL,
+  topic_name VARCHAR(200) NOT NULL,
+  important_points TEXT,
+  explanation TEXT,
+  real_world_example TEXT,
+  ideal_answer_format TEXT,
+  revision_plan TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE quiz_attempts (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  session_id BIGINT NOT NULL,
+  topic_name VARCHAR(200) NOT NULL,
+  question TEXT NOT NULL,
+  options JSON NOT NULL,
+  correct_option INT NOT NULL,
+  selected_option INT,
+  is_correct BOOLEAN,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE qa_practices (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  session_id BIGINT NOT NULL,
+  topic_name VARCHAR(200) NOT NULL,
+  question TEXT NOT NULL,
+  user_answer TEXT NOT NULL,
+  ai_feedback TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);

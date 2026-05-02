@@ -1,0 +1,99 @@
+# Prep Rush — Cursor Autonomous Build Rules
+
+## CRITICAL: Read First
+Before starting ANY task, read PREP_RUSH.md completely.
+Every decision about naming, structure, APIs, DB schema must match PREP_RUSH.md exactly.
+
+---
+
+## Autonomous Behavior Rules
+
+### Self-verification
+- After writing any backend code, verify it compiles (check for syntax errors, missing imports, wrong types)
+- After writing any frontend code, verify there are no TypeScript errors
+- After creating a new API endpoint, mentally trace: controller → service → repository → DB to confirm the full chain works
+- If you find an error while verifying, fix it before moving to the next step
+- Never leave a TODO comment unless explicitly instructed — implement it or note it in a comment starting with "PENDING:"
+
+### Error Handling
+- Every Spring Boot service method must have a try-catch or be wrapped in proper exception handling
+- Every frontend API call must handle loading state, success state, and error state
+- Global exception handler in Spring Boot must catch all unhandled exceptions
+- Gemini API calls must retry once on failure, then throw a descriptive error
+
+### Naming Conventions
+- Java: camelCase for variables/methods, PascalCase for classes, UPPER_SNAKE_CASE for constants
+- TypeScript/React: camelCase for variables/functions, PascalCase for components, kebab-case for file names
+- DB tables: snake_case (already defined in PREP_RUSH.md — do not change)
+- API routes: kebab-case (e.g. /prep-rush/generate, /auth/login)
+- React components: one component per file, named same as file
+
+### Code Style
+- Java: use constructor injection (not @Autowired field injection)
+- Java: use Optional properly — never call .get() without checking isPresent()
+- TypeScript: use interfaces for all API response/request types
+- React: use functional components with hooks only — no class components
+- Tailwind: mobile-first responsive classes
+
+### Database
+- Use the exact table names and column names from PREP_RUSH.md — never invent new ones
+- JPA entities must map exactly to the schema in PREP_RUSH.md
+- Use @Transactional on service methods that write to DB
+- Never expose entity objects directly in API responses — always use DTOs
+
+### Security
+- JWT must be validated on every protected endpoint
+- Users can only access their own sessions — always filter by userId from JWT
+- Passwords must be hashed with BCrypt
+- Never log passwords, tokens, or sensitive user data
+- CORS must allow only localhost:3000 in development
+
+### Gemini API
+- All Gemini calls go through GeminiService.java — never call Gemini directly from controllers
+- Always use the exact prompt templates from PREP_RUSH.md section 5
+- Parse Gemini response as JSON — if parsing fails, retry once, then throw exception
+- Log Gemini errors with topic/paper context for debugging
+
+### Frontend
+- All API calls go through a centralized api/ folder using Axios instance with interceptors
+- JWT token is read from cookie and attached to every request via Axios interceptor
+- AuthGuard component wraps all protected pages — redirects to /auth/login if no token
+- All forms must have client-side validation before calling API
+- Use Next.js App Router conventions — layout.tsx, page.tsx, loading.tsx, error.tsx
+
+---
+
+## Step Sequence to Follow
+
+When asked to build the full project, follow this order exactly:
+
+1. Scaffold folder structure (both frontend and backend)
+2. Set up DB migration scripts
+3. Implement auth (backend) → auth (frontend)
+4. Implement session creation (backend) → onboarding page (frontend)
+5. Implement Normal Revision mode (backend + frontend)
+6. Implement PrepRush mode (backend + frontend)
+7. Implement Q&A practice (backend + frontend)
+8. Implement dashboard page
+9. Add loading/error states everywhere
+10. Final self-check: trace each user flow end to end
+
+---
+
+## What "Done" Means for Each Task
+
+- Backend endpoint: compiles, handles errors, returns correct DTO shape per PREP_RUSH.md
+- Frontend page: renders data, shows loading spinner, shows error message, mobile responsive
+- Gemini integration: uses exact prompt from PREP_RUSH.md, parses JSON response, saves to DB
+
+---
+
+## Do Not
+- Do not use GraphQL — REST only
+- Do not use any UI library other than Tailwind CSS (no Material UI, no Chakra)
+- Do not use Redux — use React Context + useReducer
+- Do not use any ORM other than Spring Data JPA
+- Do not change the DB schema defined in PREP_RUSH.md
+- Do not add features not described in PREP_RUSH.md without asking
+- Do not skip error handling to save time
+- Do not hardcode API keys — always read from environment variables
